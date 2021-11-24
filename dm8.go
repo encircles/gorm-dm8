@@ -44,7 +44,7 @@ func (d Dialector) DummyTableName() string {
 }
 
 func (d Dialector) Name() string {
-	return "dm8"
+	return "dm"
 }
 
 func (d Dialector) Initialize(db *gorm.DB) (err error) {
@@ -57,7 +57,7 @@ func (d Dialector) Initialize(db *gorm.DB) (err error) {
 		DeleteClauses: []string{"DELETE", "FROM", "WHERE", "RETURNING"},
 	})
 
-	d.DriverName = "godror"
+	d.DriverName = "dm"
 
 	if d.Conn != nil {
 		db.ConnPool = d.Conn
