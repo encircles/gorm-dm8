@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	_ "github.com/godror/godror"
+	// _ "github.com/godror/godror"
+	_ "gitee.com/chunanyong/dm"
 	"github.com/thoas/go-funk"
 	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"
@@ -16,7 +17,7 @@ import (
 	"gorm.io/gorm/migrator"
 	"gorm.io/gorm/schema"
 
-	"github.com/ducla5/gorm-driver-oracle/clauses"
+	"gitee.com/encircles/gorm-dm8/clauses"
 )
 
 type Config struct {
@@ -43,7 +44,7 @@ func (d Dialector) DummyTableName() string {
 }
 
 func (d Dialector) Name() string {
-	return "oracle"
+	return "dm8"
 }
 
 func (d Dialector) Initialize(db *gorm.DB) (err error) {
@@ -285,7 +286,7 @@ func (d Dialector) DataTypeOf(field *schema.Field) string {
 		}
 
 		if sqlType == "" {
-			panic(fmt.Sprintf("invalid sql type %s (%s) for oracle", field.FieldType.Name(), field.FieldType.String()))
+			panic(fmt.Sprintf("invalid sql type %s (%s) for dm8", field.FieldType.Name(), field.FieldType.String()))
 		}
 
 		notNull, _ := field.TagSettings["NOT NULL"]
