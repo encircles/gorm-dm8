@@ -3,8 +3,9 @@ package dm8
 import (
 	"bytes"
 	"database/sql"
-	"github.com/encircles/gorm-dm8/clauses"
 	"reflect"
+
+	"gitee.com/encircles/gorm-dm8/clauses"
 
 	"github.com/thoas/go-funk"
 	"gorm.io/gorm"
