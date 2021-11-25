@@ -15,7 +15,7 @@ type Migrator struct {
 
 func (m Migrator) CurrentDatabase() (name string) {
 	m.DB.Raw(
-		fmt.Sprintf(`SELECT SYS_CONTEXT ('userenv', 'current_schema') FROM %s`, m.Dialector.(Dialector).DummyTableName()),
+		fmt.Sprintf(`SELECT SYS_CONTEXT ('userenv', 'current_schema') "Current Database" FROM %s`, m.Dialector.(Dialector).DummyTableName()),
 	).Row().Scan(&name)
 	return
 }
