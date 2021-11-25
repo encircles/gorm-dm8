@@ -46,6 +46,7 @@ func (m Migrator) HasTable(value interface{}) bool {
 	var count int64
 
 	m.RunWithValue(value, func(stmt *gorm.Statement) error {
+		// eg: SELECT COUNT(*) FROM USER_TABLES WHERE TABLE_NAME = 'DEMO' AND TABLESPACE_NAME = 'WISDOM_TEST'
 		return m.DB.Raw("SELECT COUNT(*) FROM USER_TABLES WHERE TABLE_NAME = ?", stmt.Table).Row().Scan(&count)
 	})
 
