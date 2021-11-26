@@ -23,7 +23,6 @@ func (m Migrator) CurrentDatabase() (name string) {
 func (m Migrator) CreateTable(values ...interface{}) error {
 	m.TryQuotifyReservedWords(values)
 	m.TryRemoveOnUpdate(values)
-	// TODO 创建表的时候， 需要指定表空间名称
 	return m.Migrator.CreateTable(values...)
 }
 
@@ -47,10 +46,7 @@ func (m Migrator) HasTable(value interface{}) bool {
 	var count int64
 
 	m.RunWithValue(value, func(stmt *gorm.Statement) error {
-		// prefix + tableName = "TEST.WISDOM".jwt_blacklist
-		// table := stmt.Table
-
-		// TODO 判断 表空间内是否有表
+		// 判断 表空间内是否有表
 		// error: SELECT COUNT(*) FROM USER_TABLES WHERE TABLE_NAME = '"TEST.WISDOM".jwt_blacklist'
 		// right: SELECT COUNT(*) FROM USER_TABLES WHERE TABLE_NAME = 'DEMO' AND TABLESPACE_NAME = 'WISDOM_TEST'
 

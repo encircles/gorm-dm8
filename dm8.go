@@ -296,6 +296,7 @@ func (d Dialector) DataTypeOf(field *schema.Field) string {
 		if value, ok := field.TagSettings["DEFAULT"]; ok {
 			additionalType = fmt.Sprintf("%s %s %s%s", "DEFAULT", value, additionalType, func() string {
 				if value, ok := field.TagSettings["COMMENT"]; ok {
+					// TODO COMMENt这里需要特殊处理, 达梦的语法
 					return " COMMENT " + value
 				}
 				return ""
