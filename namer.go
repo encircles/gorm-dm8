@@ -8,6 +8,7 @@ import (
 
 type Namer struct {
 	schema.NamingStrategy
+	DmSchemaName   string
 	TableSpaceName string
 }
 
