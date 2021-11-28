@@ -91,8 +91,11 @@ func Create(db *gorm.DB) {
 					if idx > 0 {
 						stmt.WriteByte(',')
 					}
+
+					out := sql.NamedArg{Name: field.DBName}
 					boundVars[field.Name] = len(stmt.Vars)
-					stmt.AddVar(stmt, sql.Out{Dest: reflect.New(field.FieldType).Interface()})
+					// stmt.AddVar(stmt, sql.Out{Dest: reflect.New(field.FieldType).Interface()})
+					stmt.AddVar(stmt, out)
 				}
 			}
 		}
