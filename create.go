@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"gitee.com/encircles/gorm-dm8/clauses"
-
 	"github.com/thoas/go-funk"
 	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"
@@ -15,6 +14,7 @@ import (
 )
 
 func Create(db *gorm.DB) {
+
 	// 可以获取表空间和模式名
 	namer := db.NamingStrategy.(Namer)
 
@@ -78,25 +78,32 @@ func Create(db *gorm.DB) {
 			stmt.AddClauseIfNotExists(clause.Insert{Table: clause.Table{Name: namer.DmSchemaName + "." + stmt.Table}})
 			stmt.AddClause(clause.Values{Columns: values.Columns, Values: [][]interface{}{values.Values[0]}})
 			if hasDefaultValues {
-				stmt.AddClauseIfNotExists(clause.Returning{
-					Columns: funk.Map(schema.FieldsWithDefaultDBValue, func(field *gormSchema.Field) clause.Column {
-						return clause.Column{Name: field.DBName}
-					}).([]clause.Column),
-				})
+				// stmt.AddClauseIfNotExists(clause.Returning{
+				// 	Columns: funk.Map(schema.FieldsWithDefaultDBValue, func(field *gormSchema.Field) clause.Column {
+				// 		return clause.Column{Name: field.DBName}
+				// 	}).([]clause.Column),
+				// })
+
+				// stmt.AddClauseIfNotExists(clauses.ReturningInto{
+				// 	Variables: funk.Map(schema.FieldsWithDefaultDBValue, func(field *gormSchema.Field) clause.Column {
+				// 		return clause.Column{Name: field.DBName}
+				// 	}).([]clause.Column),
+				// })
 			}
 			stmt.Build("INSERT", "VALUES", "RETURNING")
+			// stmt.Build("INSERT", "VALUES")
 			if hasDefaultValues {
-				stmt.WriteString(" INTO ")
-				for idx, field := range schema.FieldsWithDefaultDBValue {
-					if idx > 0 {
-						stmt.WriteByte(',')
-					}
-
-					out := sql.NamedArg{Name: field.DBName}
-					boundVars[field.Name] = len(stmt.Vars)
-					// stmt.AddVar(stmt, sql.Out{Dest: reflect.New(field.FieldType).Interface()})
-					stmt.AddVar(stmt, out)
-				}
+				// stmt.WriteString(" INTO ")
+				// for idx, field := range schema.FieldsWithDefaultDBValue {
+				// 	if idx > 0 {
+				// 		stmt.WriteByte(',')
+				// 	}
+				//
+				// 	out := sql.NamedArg{Name: field.DBName}
+				// 	boundVars[field.Name] = len(stmt.Vars)
+				// 	// stmt.AddVar(stmt, sql.Out{Dest: reflect.New(field.FieldType).Interface()})
+				// 	stmt.AddVar(stmt, out)
+				// }
 			}
 		}
 
@@ -120,30 +127,46 @@ func Create(db *gorm.DB) {
 				case nil: // success
 					db.RowsAffected, _ = result.RowsAffected()
 
-					insertTo := stmt.ReflectValue
-					switch insertTo.Kind() {
-					case reflect.Slice, reflect.Array:
-						insertTo = insertTo.Index(idx)
+					if db.RowsAffected != 0 {
+
+						insertID, err := result.LastInsertId()
+						insertOk := err == nil && insertID > 0
+						if !insertOk {
+							db.AddError(err)
+							return
+						}
+
+						insertTo := stmt.ReflectValue
+						switch insertTo.Kind() {
+						case reflect.Slice, reflect.Array:
+							insertTo = insertTo.Index(idx)
+						case reflect.Struct:
+							_, isZero := stmt.Schema.PrioritizedPrimaryField.ValueOf(db.Statement.ReflectValue)
+							if isZero {
+								stmt.Schema.PrioritizedPrimaryField.Set(db.Statement.ReflectValue, insertID)
+							}
+						}
+
+						if hasDefaultValues {
+							// bind returning value back to reflected value in the respective fields
+							funk.ForEach(
+								funk.Filter(schema.FieldsWithDefaultDBValue, func(field *gormSchema.Field) bool {
+									return funk.Contains(boundVars, field.Name)
+								}),
+								func(field *gormSchema.Field) {
+									switch insertTo.Kind() {
+									case reflect.Struct:
+										if err = field.Set(insertTo, stmt.Vars[boundVars[field.Name]].(sql.Out).Dest); err != nil {
+											db.AddError(err)
+										}
+									case reflect.Map:
+										// todo 设置id的值
+									}
+								},
+							)
+						}
 					}
 
-					if hasDefaultValues {
-						// bind returning value back to reflected value in the respective fields
-						funk.ForEach(
-							funk.Filter(schema.FieldsWithDefaultDBValue, func(field *gormSchema.Field) bool {
-								return funk.Contains(boundVars, field.Name)
-							}),
-							func(field *gormSchema.Field) {
-								switch insertTo.Kind() {
-								case reflect.Struct:
-									if err = field.Set(insertTo, stmt.Vars[boundVars[field.Name]].(sql.Out).Dest); err != nil {
-										db.AddError(err)
-									}
-								case reflect.Map:
-									// todo 设置id的值
-								}
-							},
-						)
-					}
 				default: // failure
 					db.AddError(err)
 				}
