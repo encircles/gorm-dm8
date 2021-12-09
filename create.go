@@ -94,12 +94,13 @@ func Create(db *gorm.DB) {
 			// stmt.Build("INSERT", "VALUES")
 			if hasDefaultValues {
 				// stmt.WriteString(" INTO ")
-				// for idx, field := range schema.FieldsWithDefaultDBValue {
-				// 	if idx > 0 {
-				// 		stmt.WriteByte(',')
-				// 	}
+				// for _, field := range schema.FieldsWithDefaultDBValue {
+				// 	// if idx > 0 {
+				// 	// 	stmt.WriteByte(',')
+				// 	// }
 				//
-				// 	out := sql.NamedArg{Name: field.DBName}
+				// 	out := sql.Named(field.DBName, sql.Out{Dest: reflect.New(field.FieldType).Interface()})
+				// 	// out := sql.NamedArg{Name: field.DBName}
 				// 	boundVars[field.Name] = len(stmt.Vars)
 				// 	// stmt.AddVar(stmt, sql.Out{Dest: reflect.New(field.FieldType).Interface()})
 				// 	stmt.AddVar(stmt, out)
@@ -151,10 +152,18 @@ func Create(db *gorm.DB) {
 							// bind returning value back to reflected value in the respective fields
 							funk.ForEach(
 								funk.Filter(schema.FieldsWithDefaultDBValue, func(field *gormSchema.Field) bool {
-									return funk.Contains(boundVars, field.Name)
+									name := field.Name
+									// out := sql.Named(field.DBName, insertID)
+									out := sql.Named(field.DBName, sql.Out{Dest: insertID})
+									boundVars[field.Name] = len(stmt.Vars)
+									stmt.AddVar(stmt, out)
+
+									return funk.Contains(boundVars, name)
 								}),
 								func(field *gormSchema.Field) {
-									switch insertTo.Kind() {
+
+									kind := insertTo.Kind()
+									switch kind {
 									case reflect.Struct:
 										if err = field.Set(insertTo, stmt.Vars[boundVars[field.Name]].(sql.Out).Dest); err != nil {
 											db.AddError(err)
