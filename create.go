@@ -141,38 +141,34 @@ func Create(db *gorm.DB) {
 						switch insertTo.Kind() {
 						case reflect.Slice, reflect.Array:
 							insertTo = insertTo.Index(idx)
+
+							// TODO 复合主键处理
+							if stmt.Schema.PrioritizedPrimaryField.HasDefaultValue {
+								switch insertTo.Kind() {
+								case reflect.Map:
+									// 如果是map的话，给map新增一个key value
+									insertTo.SetMapIndex(reflect.ValueOf(stmt.Schema.PrioritizedPrimaryField.DBName), reflect.ValueOf(insertID))
+								case reflect.Struct:
+									// 如果切片或数组内是结构体的话，就把自增id复制给主键
+									_, isZero := stmt.Schema.PrioritizedPrimaryField.ValueOf(insertTo)
+									if isZero {
+										stmt.Schema.PrioritizedPrimaryField.Set(insertTo, insertID)
+									}
+								}
+							}
+
+						case reflect.Map:
+							// 如果是map的话，给map新增一个key value
+							insertTo.SetMapIndex(reflect.ValueOf(stmt.Schema.PrioritizedPrimaryField.DBName), reflect.ValueOf(insertID))
 						case reflect.Struct:
-							_, isZero := stmt.Schema.PrioritizedPrimaryField.ValueOf(db.Statement.ReflectValue)
+							_, isZero := stmt.Schema.PrioritizedPrimaryField.ValueOf(insertTo)
 							if isZero {
-								stmt.Schema.PrioritizedPrimaryField.Set(db.Statement.ReflectValue, insertID)
+								stmt.Schema.PrioritizedPrimaryField.Set(insertTo, insertID)
 							}
 						}
 
 						if hasDefaultValues {
 							// bind returning value back to reflected value in the respective fields
-							// funk.ForEach(
-							// 	funk.Filter(schema.FieldsWithDefaultDBValue, func(field *gormSchema.Field) bool {
-							// 		name := field.Name
-							// 		// out := sql.Named(field.DBName, insertID)
-							// 		out := sql.Named(field.DBName, sql.Out{Dest: insertID})
-							// 		boundVars[field.Name] = len(stmt.Vars)
-							// 		stmt.AddVar(stmt, out)
-							//
-							// 		return funk.Contains(boundVars, name)
-							// 	}),
-							// 	func(field *gormSchema.Field) {
-							//
-							// 		kind := insertTo.Kind()
-							// 		switch kind {
-							// 		case reflect.Struct:
-							// 			if err = field.Set(insertTo, stmt.Vars[boundVars[field.Name]].(sql.Out).Dest); err != nil {
-							// 				db.AddError(err)
-							// 			}
-							// 		case reflect.Map:
-							// 			// todo 设置id的值
-							// 		}
-							// 	},
-							// )
 							funk.ForEach(
 								funk.Filter(schema.FieldsWithDefaultDBValue, func(field *gormSchema.Field) bool {
 									return funk.Contains(boundVars, field.Name)
@@ -184,7 +180,7 @@ func Create(db *gorm.DB) {
 											db.AddError(err)
 										}
 									case reflect.Map:
-										// todo 设置id的值
+										// TODO 设置id的值
 									}
 								},
 							)
