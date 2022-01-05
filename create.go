@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"reflect"
 
-	"gitee.com/encircles/gorm-dm8/clauses"
+	"github.com/encircles/gorm-dm8/clauses"
 	"github.com/thoas/go-funk"
 	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"

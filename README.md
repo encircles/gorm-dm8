@@ -7,13 +7,13 @@ package main
 import (
 	"fmt"
 
-	"gitee.com/encircles/gorm-dm8"
+	"github.com/encircles/gorm-dm8"
 	"gorm.io/gorm"
 )
 
 func main() {
 
-	// https://gitee.com/encircles/gorm-dm8
+	// https://github.com/encircles/gorm-dm8
 	dsn := "dm://SYSDBA:PASSWORD@127.0.0.1:5236?ignoreCase=false&appName=wisdom&statEnable=false"
 	db, err := gorm.Open(dm8.Open(dsn), &gorm.Config{})
 	if err != nil {
