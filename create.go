@@ -150,20 +150,35 @@ func Create(db *gorm.DB) {
 
 						if hasDefaultValues {
 							// bind returning value back to reflected value in the respective fields
+							// funk.ForEach(
+							// 	funk.Filter(schema.FieldsWithDefaultDBValue, func(field *gormSchema.Field) bool {
+							// 		name := field.Name
+							// 		// out := sql.Named(field.DBName, insertID)
+							// 		out := sql.Named(field.DBName, sql.Out{Dest: insertID})
+							// 		boundVars[field.Name] = len(stmt.Vars)
+							// 		stmt.AddVar(stmt, out)
+							//
+							// 		return funk.Contains(boundVars, name)
+							// 	}),
+							// 	func(field *gormSchema.Field) {
+							//
+							// 		kind := insertTo.Kind()
+							// 		switch kind {
+							// 		case reflect.Struct:
+							// 			if err = field.Set(insertTo, stmt.Vars[boundVars[field.Name]].(sql.Out).Dest); err != nil {
+							// 				db.AddError(err)
+							// 			}
+							// 		case reflect.Map:
+							// 			// todo 设置id的值
+							// 		}
+							// 	},
+							// )
 							funk.ForEach(
 								funk.Filter(schema.FieldsWithDefaultDBValue, func(field *gormSchema.Field) bool {
-									name := field.Name
-									// out := sql.Named(field.DBName, insertID)
-									out := sql.Named(field.DBName, sql.Out{Dest: insertID})
-									boundVars[field.Name] = len(stmt.Vars)
-									stmt.AddVar(stmt, out)
-
-									return funk.Contains(boundVars, name)
+									return funk.Contains(boundVars, field.Name)
 								}),
 								func(field *gormSchema.Field) {
-
-									kind := insertTo.Kind()
-									switch kind {
+									switch insertTo.Kind() {
 									case reflect.Struct:
 										if err = field.Set(insertTo, stmt.Vars[boundVars[field.Name]].(sql.Out).Dest); err != nil {
 											db.AddError(err)
