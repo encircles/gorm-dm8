@@ -205,7 +205,9 @@ func (d Dialector) BindVarTo(writer clause.Writer, stmt *gorm.Statement, v inter
 }
 
 func (d Dialector) QuoteTo(writer clause.Writer, str string) {
-	writer.WriteString(str)
+	// writer.WriteString(str)
+	// 添加双引号
+	writer.WriteString("\"" + str + "\"")
 }
 
 var numericPlaceholder = regexp.MustCompile(`:(\d+)`)
